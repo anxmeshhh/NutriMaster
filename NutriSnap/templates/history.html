@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}History{% endblock %}
+{% block content %}
+<h2 class="text-center mb-4 text-primary" style="animation: fadeIn 1s;"><i class="fas fa-history"></i> Food Log History</h2>
+<div class="card shadow mb-4" style="animation: fadeIn 1s;">
+    <div class="card-body">
+        <h3 class="card-title text-primary"><i class="fas fa-calendar"></i> Select Date</h3>
+        <form method="POST">
+            <div class="mb-3">
+                <input type="text" class="form-control" id="datePicker" name="selected_date" value="{{ selected_date }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> View Logs</button>
+        </form>
+    </div>
+</div>
+<div class="card shadow mb-4" style="animation: fadeIn 1s;">
+    <div class="card-body">
+        <h3 class="card-title text-primary"><i class="fas fa-list"></i> Food Logs for {{ selected_date }}</h3>
+        <p class="text-success"><strong>Total Calories:</strong> {{ total_calories }} kcal</p>
+        <p class="text-success"><strong>Total Protein:</strong> {{ total_protein }} g</p>
+        <p class="text-success"><strong>Total Carbs:</strong> {{ total_carbs }} g</p>
+        <p class="text-success"><strong>Total Fats:</strong> {{ total_fats }} g</p>
+        <ul class="list-group">
+            {% for log in food_logs %}
+                <li class="list-group-item" style="transition: all 0.3s;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ log['food_name'] }}</strong>
+                            {% if log['image_path'] %}
+                                <img src="{{ url_for('static', filename=log['image_path'].replace('static/', '')) }}" alt="{{ log['food_name'] }}" class="img-thumbnail ms-2" style="max-width: 100px; max-height: 100px; object-fit: cover;">
+                            {% else %}
+                                <p class="ms-2">No image available</p>
+                            {% endif %}
+                        </div>
+                        <button class="btn btn-link text-primary" data-bs-toggle="collapse" data-bs-target="#details-{{ log['id'] }}"><i class="fas fa-info-circle"></i></button>
+                    </div>
+                    <div class="collapse mt-2" id="details-{{ log['id'] }}">
+                        <ul class="list-unstyled">
+                            <li><strong>Calories:</strong> {{ log['calories'] }} kcal</li>
+                            <li><strong>Protein:</strong> {{ log['protein'] }} g</li>
+                            <li><strong>Carbs:</strong> {{ log['carbs'] }} g</li>
+                            <li><strong>Fats:</strong> {{ log['fats'] }} g</li>
+                            {% if log['vitamins'] %}
+                                <li><strong>Vitamins:</strong> {{ log['vitamins'] }}</li>
+                            {% endif %}
+                            {% if log['minerals'] %}
+                                <li><strong>Minerals:</strong> {{ log['minerals'] }}</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+<div class="card shadow" style="animation: fadeIn 1s;">
+    <div class="card-body">
+        <h3 class="card-title text-primary"><i class="fas fa-chart-line"></i> Weekly Trends</h3>
+        <canvas id="trendChart" width="400" height="200"></canvas>
+    </div>
+</div>
+<script>
+    flatpickr('#datePicker', {
+        dateFormat: 'Y-m-d',
+        maxDate: 'today'
+    });
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for day in trend_data %}'{{ day.date }}',{% endfor %}],
+            datasets: [
+                {
+                    label: 'Calories',
+                    data: [{% for day in trend_data %}{{ day.calories }},{% endfor %}],
+                    borderColor: '#007bff',
+                    fill: false,
+                    tension: 0.4
+                },
+                {
+                    label: 'Protein',
+                    data: [{% for day in trend_data %}{{ day.protein }},{% endfor %}],
+                    borderColor: '#28a745',
+                    fill: false,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true },
+                x: { title: { display: true, text: 'Date' } }
+            },
+            animation: { duration: 1000 }
+        }
+    });
+</script>
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+{% endblock %}

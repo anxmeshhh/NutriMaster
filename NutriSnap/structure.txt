@@ -1,0 +1,15 @@
+calorie_counter/
+├── app.py
+├── .env
+├── templates/
+│   ├── signup.html
+│   ├── login.html
+│   ├── bmi.html
+│   ├── goals.html
+│   ├── dashboard.html
+├── static/
+│   ├── css/
+│   │   ├── styles.css
+│   ├── js/
+│   │   ├── scripts.js
+├── database.db

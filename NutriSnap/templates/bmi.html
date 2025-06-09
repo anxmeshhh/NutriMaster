@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}BMI Calculator{% endblock %}
+{% block content %}
+<div class="card shadow p-4 mx-auto" style="max-width: 400px; animation: fadeIn 1s;">
+    <h2 class="card-title text-center text-primary"><i class="fas fa-weight"></i> Calculate Your BMI</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="height" class="form-label">Height (cm)</label>
+            <input type="number" class="form-control" id="height" name="height" required>
+        </div>
+        <div class="mb-3">
+            <label for="weight" class="form-label">Weight (kg)</label>
+            <input type="number" class="form-control" id="weight" name="weight" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-calculator"></i> Calculate</button>
+    </form>
+</div>
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+{% endblock %}

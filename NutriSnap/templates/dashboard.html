@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h2 class="text-center mb-4 text-primary" style="animation: fadeIn 1s;"><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow mb-4" style="background: linear-gradient(135deg, #e0f7fa, #ffffff); animation: fadeIn 1s;">
+            <div class="card-body">
+                <h3 class="card-title text-primary"><i class="fas fa-bullseye"></i> Your Goal</h3>
+                <p><strong>Goal:</strong> {{ goal['goal_type'] | capitalize if goal['goal_type'] else 'Not Set' }}</p>
+                <p><strong>Daily Calorie Goal:</strong> {{ goal['daily_calories'] }} kcal</p>
+                <p><strong>Daily Protein Goal:</strong> {{ goal['daily_protein'] }} g</p>
+                <a href="{{ url_for('update_goal') }}" class="btn btn-outline-primary"><i class="fas fa-edit"></i> Update Goal</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow mb-4" style="background: linear-gradient(135deg, #e0f7fa, #ffffff); animation: fadeIn 1s;">
+            <div class="card-body text-center">
+                <h3 class="card-title text-primary"><i class="fas fa-chart-pie"></i> Today's Progress</h3>
+                <p><strong>Calories:</strong> <span id="total_calories">{{ total_calories }}</span> kcal</p>
+                <p><strong>Protein:</strong> <span id="total_protein">{{ total_protein }}</span> g</p>
+                <div class="row">
+                    <div class="col">
+                        <canvas id="calorieChart" width="150" height="150"></canvas>
+                        <p class="text-muted">Calorie Progress</p>
+                    </div>
+                    <div class="col">
+                        <canvas id="proteinChart" width="150" height="150"></canvas>
+                        <p class="text-muted">Protein Progress</p>
+                    </div>
+                </div>
+                <canvas id="macroChart" width="200" height="200"></canvas>
+                <p class="text-muted">Macronutrient Breakdown</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card shadow mb-4" style="animation: fadeIn 1s;">
+    <div class="card-body">
+        <h3 class="card-title text-primary"><i class="fas fa-plus"></i> Log Food</h3>
+        <ul class="nav nav-tabs" id="logTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="image-tab" data-bs-toggle="tab" href="#image" role="tab"><i class="fas fa-camera"></i> Image</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="manual-tab" data-bs-toggle="tab" href="#manual" role="tab"><i class="fas fa-keyboard"></i> Manual</a>
+            </li>
+        </ul>
+        <div class="tab-content mt-3">
+            <div class="tab-pane fade show active" id="image" role="tabpanel">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="food_image" class="form-label">Food Image</label>
+                        <input type="file" class="form-control" id="food_image" name="food_image" accept="image/*" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Analyze & Log</button>
+                </form>
+            </div>
+            <div class="tab-pane fade" id="manual" role="tabpanel">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="food_name" class="form-label">Food Name</label>
+                        <input type="text" class="form-control" id="food_name" name="food_name" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="calories" class="form-label">Calories (kcal)</label>
+                            <input type="number" class="form-control" id="calories" name="calories" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="protein" class="form-label">Protein (g)</label>
+                            <input type="number" step="0.1" class="form-control" id="protein" name="protein" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="carbs" class="form-label">Carbs (g)</label>
+                            <input type="number" step="0.1" class="form-control" id="carbs" name="carbs" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="fats" class="form-label">Fats (g)</label>
+                            <input type="number" step="0.1" class="form-control" id="fats" name="fats" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="vitamins" class="form-label">Vitamins (e.g., Vitamin C)</label>
+                        <input type="text" class="form-control" id="vitamins" name="vitamins">
+                    </div>
+                    <div class="mb-3">
+                        <label for="minerals" class="form-label">Minerals (e.g., Iron)</label>
+                        <input type="text" class="form-control" id="minerals" name="minerals">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Log Food</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card shadow" style="animation: fadeIn 1s;">
+    <div class="card-body">
+        <h3 class="card-title text-primary"><i class="fas fa-list"></i> Today's Food Log</h3>
+        <ul class="list-group">
+            {% for log in food_logs %}
+                <li class="list-group-item" style="transition: all 0.3s;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ log['food_name'] }}</strong>
+                            {% if log['image_path'] %}
+                                <img src="{{ url_for('static', filename=log['image_path'].replace('static/', '')) }}" alt="{{ log['food_name'] }}" class="img-thumbnail ms-2" style="max-width: 100px; max-height: 100px; object-fit: cover;">
+                            {% else %}
+                                <p class="ms-2">No image available</p>
+                            {% endif %}
+                        </div>
+                        <button class="btn btn-link text-primary" data-bs-toggle="collapse" data-bs-target="#details-{{ log['id'] }}"><i class="fas fa-info-circle"></i></button>
+                    </div>
+                    <div class="collapse mt-2" id="details-{{ log['id'] }}">
+                        <ul class="list-unstyled">
+                            <li><strong>Calories:</strong> {{ log['calories'] }} kcal</li>
+                            <li><strong>Protein:</strong> {{ log['protein'] }} g</li>
+                            <li><strong>Carbs:</strong> {{ log['carbs'] }} g</li>
+                            <li><strong>Fats:</strong> {{ log['fats'] }} g</li>
+                            {% if log['vitamins'] %}
+                                <li><strong>Vitamins:</strong> {{ log['vitamins'] }}</li>
+                            {% endif %}
+                            {% if log['minerals'] %}
+                                <li><strong>Minerals:</strong> {{ log['minerals'] }}</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+<script>
+    const calorieCtx = document.getElementById('calorieChart').getContext('2d');
+    const proteinCtx = document.getElementById('proteinChart').getContext('2d');
+    const macroCtx = document.getElementById('macroChart').getContext('2d');
+    new Chart(calorieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Consumed', 'Remaining'],
+            datasets: [{
+                data: [{{ total_calories }}, {{ goal['daily_calories'] - total_calories if goal else 0 }}],
+                backgroundColor: ['#007bff', '#e9ecef'],
+                borderWidth: 2
+            }]
+        },
+        options: { cutout: '70%', plugins: { legend: { display: false } }, animation: { duration: 1000 } }
+    });
+    new Chart(proteinCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Consumed', 'Remaining'],
+            datasets: [{
+                data: [{{ total_protein }}, {{ goal['daily_protein'] - total_protein if goal else 0 }}],
+                backgroundColor: ['#28a745', '#e9ecef'],
+                borderWidth: 2
+            }]
+        },
+        options: { cutout: '70%', plugins: { legend: { display: false } }, animation: { duration: 1000 } }
+    });
+    new Chart(macroCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Protein', 'Carbs', 'Fats'],
+            datasets: [{
+                data: [{{ total_protein }}, {{ total_carbs }}, {{ total_fats }}],
+                backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                borderWidth: 2
+            }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } }, animation: { duration: 1000 } }
+    });
+</script>
+{% endblock %}
